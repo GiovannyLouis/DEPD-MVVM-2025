@@ -23,10 +23,13 @@ class HomeViewModel with ChangeNotifier {
     setProvinceList(ApiResponse.loading());
     // Panggil repository untuk fetch data dan sesuaikan output berdasarkan statusnya
     _homeRepo
+        // fetchProvinceList() akan mengembalikan Future<List<Province>>
         .fetchProvinceList()
+        // Menggunakan then untuk menangani hasil sukses
         .then((value) {
           setProvinceList(ApiResponse.completed(value));
         })
+        // Menggunakan onError untuk menangani error
         .onError((error, _) {
           setProvinceList(ApiResponse.error(error.toString()));
         });

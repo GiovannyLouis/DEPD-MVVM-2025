@@ -3,6 +3,7 @@ import 'package:depd_mvvm_2025/model/model.dart';
 
 // Repository untuk menangani logika bisnis terkait data ongkir
 class HomeRepository {
+  // NetworkApiServices hanya perlu 1 instance sehingga tidak perlu ganti service selama aplikasi berjalan
   final _apiServices = NetworkApiServices();
 
   // Mengambil daftar provinsi dari API
@@ -19,6 +20,7 @@ class HomeRepository {
     final data = response['data'];
     if (data is! List) return [];
 
+    // Ubah setiap item (Map) menjadi object Province
     return data.map((e) => Province.fromJson(e)).toList();
   }
 

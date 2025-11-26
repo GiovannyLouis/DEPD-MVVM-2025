@@ -8,9 +8,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  // Variabel akan diinisialisasi nanti, tetapi pasti sebelum digunakan. Dart tidak mengizinkan variabel non-nullable tanpa nilai awal karena homeViewModel baru bisa diakses setelah widget "hidup", yaitu di initState() ketika Provider.of() sudah bisa digunakan.
   late HomeViewModel homeViewModel;
 
-  // Controller untuk input berat barang
+  // Controller untuk input berat barang yang hanya dibuat sekali saat initState
   final weightController = TextEditingController();
 
   // Daftar pilihan kurir yang tersedia
@@ -23,8 +24,11 @@ class _HomePageState extends State<HomePage> {
   int? selectedProvinceDestinationId;
   int? selectedCityDestinationId;
 
+  // Menimpa method bawaan State
   @override
+  // Lifecycle method dari State<T>
   void initState() {
+    // Memanggil logika bawaan framework dulu
     super.initState();
     // Inisialisasi ViewModel dan load data provinsi jika belum dimulai
     homeViewModel = Provider.of<HomeViewModel>(context, listen: false);
@@ -33,7 +37,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // Membersihkan TextEditingController ketika dihapus dari widget tree untuk mencegah memory leak
+  // Membersihkan TextEditingController dan menghentikan listener stream ketika dihapus dari widget tree untuk mencegah memory leak
   @override
   void dispose() {
     weightController.dispose();
@@ -67,14 +71,17 @@ class _HomePageState extends State<HomePage> {
                                 value: selectedCourier,
                                 // Membuat daftar item dropdown dari opsi kurir yang tersedia
                                 items: courierOptions
-                                    .map((c) => DropdownMenuItem(
-                                          value: c,
-                                          child: Text(c.toUpperCase()),
-                                        ))
+                                    .map(
+                                      (c) => DropdownMenuItem(
+                                        value: c,
+                                        child: Text(c.toUpperCase()),
+                                      ),
+                                    )
                                     .toList(),
                                 // Mengubah nilai selectedCourier saat user memilih opsi baru
                                 onChanged: (v) => setState(
-                                    () => selectedCourier = v ?? "jne"),
+                                  () => selectedCourier = v ?? "jne",
+                                ),
                               ),
                             ),
                             const SizedBox(width: 16),
@@ -84,7 +91,8 @@ class _HomePageState extends State<HomePage> {
                                 controller: weightController,
                                 keyboardType: TextInputType.number,
                                 decoration: const InputDecoration(
-                                    labelText: 'Berat (gr)'),
+                                  labelText: 'Berat (gr)',
+                                ),
                               ),
                             ),
                           ],
@@ -93,8 +101,10 @@ class _HomePageState extends State<HomePage> {
                         // Section Origin (Asal pengiriman)
                         const Align(
                           alignment: Alignment.centerLeft,
-                          child: Text("Origin",
-                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          child: Text(
+                            "Origin",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                         Row(
                           children: [
@@ -107,15 +117,17 @@ class _HomePageState extends State<HomePage> {
                                     return const SizedBox(
                                       height: 40,
                                       child: Center(
-                                          child: CircularProgressIndicator(
-                                              color: Colors.black)),
+                                        child: CircularProgressIndicator(
+                                          color: Colors.black,
+                                        ),
+                                      ),
                                     );
                                   }
                                   if (vm.provinceList.status == Status.error) {
                                     return Text(
-                                        vm.provinceList.message ?? 'Error',
-                                        style:
-                                            const TextStyle(color: Colors.red));
+                                      vm.provinceList.message ?? 'Error',
+                                      style: const TextStyle(color: Colors.red),
+                                    );
                                   }
 
                                   final provinces = vm.provinceList.data ?? [];
@@ -125,21 +137,27 @@ class _HomePageState extends State<HomePage> {
 
                                   return DropdownButton<int>(
                                     isExpanded: true,
-                                    value: selectedProvinceOriginId,
+                                    value: selectedProvinceOriginId, // Masih null saat awal
                                     hint: const Text('Pilih provinsi'),
                                     items: provinces
-                                        .map((p) => DropdownMenuItem<int>(
-                                            value: p.id, child: Text(p.name ?? '')))
+                                        .map(
+                                          (p) => DropdownMenuItem<int>(
+                                            value: p.id,
+                                            child: Text(p.name ?? ''),
+                                          ),
+                                        )
                                         .toList(),
-                                    onChanged: (newId) {
+                                    onChanged: (newId) { // Ketika user memilih provinsi baru, misalnya ID 1
                                       setState(() {
                                         selectedProvinceOriginId = newId;
                                         selectedCityOriginId =
                                             null; // Reset kota saat provinsi berubah
                                       });
+                                      // Jika ada ID provinsi yang dipilih, load daftar kota untuk provinsi tersebut
                                       if (newId != null) {
                                         vm.getCityOriginList(
-                                            newId); // Load kota berdasarkan provinsi
+                                          newId,
+                                        );
                                       }
                                     },
                                   );
@@ -155,9 +173,13 @@ class _HomePageState extends State<HomePage> {
                                 builder: (context, vm, _) {
                                   if (vm.cityOriginList.status ==
                                       Status.notStarted) {
-                                    return const Text('Pilih provinsi dulu',
-                                        style: TextStyle(
-                                            fontSize: 12, color: Colors.grey));
+                                    return const Text(
+                                      'Pilih provinsi dulu',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    );
                                   }
 
                                   if (vm.cityOriginList.status ==
@@ -165,17 +187,19 @@ class _HomePageState extends State<HomePage> {
                                     return const SizedBox(
                                       height: 40,
                                       child: Center(
-                                          child: CircularProgressIndicator(
-                                              color: Colors.black)),
+                                        child: CircularProgressIndicator(
+                                          color: Colors.black,
+                                        ),
+                                      ),
                                     );
                                   }
 
                                   if (vm.cityOriginList.status ==
                                       Status.error) {
                                     return Text(
-                                        vm.cityOriginList.message ?? 'Error',
-                                        style:
-                                            const TextStyle(color: Colors.red));
+                                      vm.cityOriginList.message ?? 'Error',
+                                      style: const TextStyle(color: Colors.red),
+                                    );
                                   }
 
                                   if (vm.cityOriginList.status ==
@@ -183,10 +207,13 @@ class _HomePageState extends State<HomePage> {
                                     final cities = vm.cityOriginList.data ?? [];
 
                                     if (cities.isEmpty) {
-                                      return const Text('Tidak ada kota',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey));
+                                      return const Text(
+                                        'Tidak ada kota',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      );
                                     }
 
                                     // Validasi value yang dipilih masih ada di daftar kota
@@ -195,18 +222,20 @@ class _HomePageState extends State<HomePage> {
                                         .toSet(); // Mengumpulkan semua cityId yang valid dari daftar kota
                                     final validValue =
                                         validIds.contains(selectedCityOriginId)
-                                            ? selectedCityOriginId
-                                            : null;
+                                        ? selectedCityOriginId
+                                        : null;
 
                                     return DropdownButton<int>(
                                       isExpanded: true,
                                       value: validValue,
                                       hint: const Text('Pilih kota'),
                                       items: cities
-                                          .map((c) => DropdownMenuItem<int>(
-                                                value: c.id,
-                                                child: Text(c.name ?? ''),
-                                              ))
+                                          .map(
+                                            (c) => DropdownMenuItem<int>(
+                                              value: c.id,
+                                              child: Text(c.name ?? ''),
+                                            ),
+                                          )
                                           .toList(),
                                       onChanged: (newId) {
                                         setState(() {
@@ -227,8 +256,10 @@ class _HomePageState extends State<HomePage> {
                         // Section Destination (Tujuan pengiriman)
                         const Align(
                           alignment: Alignment.centerLeft,
-                          child: Text("Destination",
-                              style: TextStyle(fontWeight: FontWeight.bold)),
+                          child: Text(
+                            "Destination",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                         Row(
                           children: [
@@ -241,15 +272,20 @@ class _HomePageState extends State<HomePage> {
                                     return const SizedBox(
                                       height: 40,
                                       child: Center(
-                                          child: CircularProgressIndicator(
-                                              color: Colors.black)),
+                                        child: CircularProgressIndicator(
+                                          color: Colors.black,
+                                        ),
+                                      ),
                                     );
                                   }
                                   if (vm.provinceList.status == Status.error) {
                                     return Text(
-                                        vm.provinceList.message ?? 'Error',
-                                        style: const TextStyle(
-                                            color: Colors.red, fontSize: 12));
+                                      vm.provinceList.message ?? 'Error',
+                                      style: const TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 12,
+                                      ),
+                                    );
                                   }
 
                                   final provinces = vm.provinceList.data ?? [];
@@ -262,8 +298,12 @@ class _HomePageState extends State<HomePage> {
                                     value: selectedProvinceDestinationId,
                                     hint: const Text('Pilih provinsi'),
                                     items: provinces
-                                        .map((p) => DropdownMenuItem<int>(
-                                            value: p.id, child: Text(p.name ?? '')))
+                                        .map(
+                                          (p) => DropdownMenuItem<int>(
+                                            value: p.id,
+                                            child: Text(p.name ?? ''),
+                                          ),
+                                        )
                                         .toList(),
                                     onChanged: (newId) {
                                       setState(() {
@@ -273,7 +313,8 @@ class _HomePageState extends State<HomePage> {
                                       });
                                       if (newId != null) {
                                         vm.getCityDestinationList(
-                                            newId); // Load kota berdasarkan provinsi
+                                          newId,
+                                        ); // Load kota berdasarkan provinsi
                                       }
                                     },
                                   );
@@ -287,9 +328,13 @@ class _HomePageState extends State<HomePage> {
                                 builder: (context, vm, _) {
                                   if (vm.cityDestinationList.status ==
                                       Status.notStarted) {
-                                    return const Text('Pilih provinsi dulu',
-                                        style: TextStyle(
-                                            fontSize: 12, color: Colors.grey));
+                                    return const Text(
+                                      'Pilih provinsi dulu',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    );
                                   }
 
                                   if (vm.cityDestinationList.status ==
@@ -297,18 +342,22 @@ class _HomePageState extends State<HomePage> {
                                     return const SizedBox(
                                       height: 40,
                                       child: Center(
-                                          child: CircularProgressIndicator(
-                                              color: Colors.black)),
+                                        child: CircularProgressIndicator(
+                                          color: Colors.black,
+                                        ),
+                                      ),
                                     );
                                   }
 
                                   if (vm.cityDestinationList.status ==
                                       Status.error) {
                                     return Text(
-                                        vm.cityDestinationList.message ??
-                                            'Error',
-                                        style: const TextStyle(
-                                            color: Colors.red, fontSize: 12));
+                                      vm.cityDestinationList.message ?? 'Error',
+                                      style: const TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 12,
+                                      ),
+                                    );
                                   }
 
                                   if (vm.cityDestinationList.status ==
@@ -317,17 +366,23 @@ class _HomePageState extends State<HomePage> {
                                         vm.cityDestinationList.data ?? [];
 
                                     if (cities.isEmpty) {
-                                      return const Text('Tidak ada kota',
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey));
+                                      return const Text(
+                                        'Tidak ada kota',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey,
+                                        ),
+                                      );
                                     }
 
                                     // Validasi value yang dipilih masih ada di list
-                                    final validIds =
-                                        cities.map((c) => c.id).toSet();
-                                    final validValue = validIds
-                                            .contains(selectedCityDestinationId)
+                                    final validIds = cities
+                                        .map((c) => c.id)
+                                        .toSet();
+                                    final validValue =
+                                        validIds.contains(
+                                          selectedCityDestinationId,
+                                        )
                                         ? selectedCityDestinationId
                                         : null;
 
@@ -336,10 +391,12 @@ class _HomePageState extends State<HomePage> {
                                       value: validValue,
                                       hint: const Text('Pilih kota'),
                                       items: cities
-                                          .map((c) => DropdownMenuItem<int>(
-                                                value: c.id,
-                                                child: Text(c.name ?? ''),
-                                              ))
+                                          .map(
+                                            (c) => DropdownMenuItem<int>(
+                                              value: c.id,
+                                              child: Text(c.name ?? ''),
+                                            ),
+                                          )
                                           .toList(),
                                       onChanged: (newId) {
                                         setState(() {
@@ -398,10 +455,13 @@ class _HomePageState extends State<HomePage> {
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
-                                padding: const EdgeInsets.all(16)),
-                            child: const Text("Hitung Ongkir",
-                                style: TextStyle(color: Colors.white)),
+                              backgroundColor: Colors.blue,
+                              padding: const EdgeInsets.all(16),
+                            ),
+                            child: const Text(
+                              "Hitung Ongkir",
+                              style: TextStyle(color: Colors.white),
+                            ),
                           ),
                         ),
                       ],
@@ -421,15 +481,19 @@ class _HomePageState extends State<HomePage> {
                           return const Padding(
                             padding: EdgeInsets.all(16.0),
                             child: Center(
-                                child: CircularProgressIndicator(
-                                    color: Colors.black)),
+                              child: CircularProgressIndicator(
+                                color: Colors.black,
+                              ),
+                            ),
                           );
                         case Status.error:
                           return Padding(
                             padding: const EdgeInsets.all(16.0),
                             child: Center(
-                              child: Text(vm.costList.message ?? 'Error',
-                                  style: const TextStyle(color: Colors.red)),
+                              child: Text(
+                                vm.costList.message ?? 'Error',
+                                style: const TextStyle(color: Colors.red),
+                              ),
                             ),
                           );
                         case Status.completed:
@@ -437,8 +501,9 @@ class _HomePageState extends State<HomePage> {
                               vm.costList.data!.isEmpty) {
                             return const Padding(
                               padding: EdgeInsets.all(16.0),
-                              child:
-                                  Center(child: Text("Tidak ada data ongkir.")),
+                              child: Center(
+                                child: Text("Tidak ada data ongkir."),
+                              ),
                             );
                           }
                           // Tampilkan list ongkir dalam bentuk card
@@ -447,19 +512,22 @@ class _HomePageState extends State<HomePage> {
                                 true, // Membuat ListView hanya sebesar kontennya
                             physics:
                                 const NeverScrollableScrollPhysics(), // Nonaktifkan scroll pada ListView agar mengikuti scroll parent
-                            itemCount: vm.costList.data?.length ??
+                            itemCount:
+                                vm.costList.data?.length ??
                                 0, // Jumlah item berdasarkan data ongkir
                             itemBuilder: (context, index) => CardCost(
-                                vm.costList.data!.elementAt(
-                                    index)), // Gunakan CardCost untuk setiap item
+                              vm.costList.data!.elementAt(index),
+                            ), // Gunakan CardCost untuk setiap item
                           );
                         default:
                           return const Padding(
                             padding: EdgeInsets.all(16.0),
                             child: Center(
-                                child: Text(
-                                    "Pilih kota dan klik Hitung Ongkir terlebih dulu.",
-                                    style: TextStyle(color: Colors.black))),
+                              child: Text(
+                                "Pilih kota dan klik Hitung Ongkir terlebih dulu.",
+                                style: TextStyle(color: Colors.black),
+                              ),
+                            ),
                           );
                       }
                     },
@@ -475,7 +543,8 @@ class _HomePageState extends State<HomePage> {
                 return Container(
                   color: Colors.black,
                   child: const Center(
-                      child: CircularProgressIndicator(color: Colors.white)),
+                    child: CircularProgressIndicator(color: Colors.white),
+                  ),
                 );
               }
 
