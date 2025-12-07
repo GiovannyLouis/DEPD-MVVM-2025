@@ -1,16 +1,9 @@
 part of 'widgets.dart';
 
-// Widget untuk menampilkan informasi biaya pengiriman dalam bentuk card
-class CardCost extends StatefulWidget {
+class CardInternationalCost extends StatelessWidget {
   final Costs cost;
-  const CardCost(this.cost, {super.key});
+  const CardInternationalCost(this.cost, {super.key});
 
-  @override
-  State<CardCost> createState() => _CardCostState();
-}
-
-class _CardCostState extends State<CardCost> {
-  // Memformat angka menjadi mata uang Rupiah
   String rupiahMoneyFormatter(int? value) {
     if (value == null) return "Rp0,00";
     final formatter = NumberFormat.currency(
@@ -21,7 +14,6 @@ class _CardCostState extends State<CardCost> {
     return formatter.format(value);
   }
 
-  // Memformat satuan "day" menjadi "hari" pada estimasi pengiriman
   String formatEtd(String? etd) {
     if (etd == null || etd.isEmpty) return '-';
     return etd.replaceAll('day', 'hari').replaceAll('days', 'hari');
@@ -29,50 +21,45 @@ class _CardCostState extends State<CardCost> {
 
   @override
   Widget build(BuildContext context) {
-    Costs cost = widget.cost;
-
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: Colors.blue[800]!),
+        side: const BorderSide(color: Colors.orange), // Warna beda dikit biar unik
       ),
-      margin: const EdgeInsetsDirectional.symmetric(
-        vertical: 8,
-        horizontal: 16,
-      ),
+      margin: const EdgeInsetsDirectional.symmetric(vertical: 8, horizontal: 16),
       color: Colors.white,
       child: ListTile(
-        // Panggil fungsi dari bottom_sheets_cost.dart di sini
         onTap: () {
+          // Menggunakan fungsi popup yang sama dari bottom_sheets_cost.dart
           showBottomSheetCost(context, cost);
         },
         title: Text(
-          style: TextStyle(
-            color: Colors.blue[800],
+          "${cost.name}: ${cost.service}",
+          style: const TextStyle(
+            color: Colors.orange, // Warna teks oranye untuk internasional
             fontWeight: FontWeight.w700,
           ),
-          "${cost.name}: ${cost.service}",
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
+              "Biaya: ${rupiahMoneyFormatter(cost.cost)}",
               style: const TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.w500,
               ),
-              "Biaya: ${rupiahMoneyFormatter(cost.cost)}",
             ),
             const SizedBox(height: 4),
             Text(
+              "Estimasi: ${formatEtd(cost.etd)}",
               style: TextStyle(color: Colors.green[800]),
-              "Estimasi sampai: ${formatEtd(cost.etd)}",
             ),
           ],
         ),
         leading: CircleAvatar(
-          backgroundColor: Colors.blue[50],
-          child: Icon(Icons.local_shipping, color: Colors.blue[800]),
+          backgroundColor: Colors.orange[50],
+          child: const Icon(Icons.public, color: Colors.orange), // Icon Globe
         ),
       ),
     );
